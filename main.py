@@ -46,8 +46,10 @@ def file_parse(path: str):
             location = re.search("(?<=\(([0-9]{4})\)).*", line).group().strip() # selects all text after 4 digits in a row excluded            print(year)
             if not df["Name"].str.contains(name).any():
                 counter += 1
-                new_row = {"Name": name, "Year": year, "Location": location}
+                new_row = {"Name": name, "Year": year, "Location": list(location)}
                 df = df.append(new_row ,ignore_index=True)
+            elif not df["Location"].str.contains(name).any(): # make it work!!!
+                df.loc[location.isin(df["Location"])].append(location)
             # TODO: <create pd DataFrame and check columns for duplicate names>
             print(df)
             if counter == 5:
