@@ -38,10 +38,9 @@ def file_parse(path: str):
     lines = file.readlines()
     for line in lines:
         try:
-            name = re.search("\"(.*?)\"", line).group()
-            year = re.search("\(([0-9]{4})\)",line).group().strip("()")
-            location = re.search("(?<=\((\d{4})\)).*", line).group()
-            print(location)
+            name = re.search("\"(.*?)\"", line).group()  # selects text inside ""
+            year = re.search("([0-9]{4})",line).group()  # selects groups of 4 numbers in a row
+            location = re.search("(?<=\((\d{4})\)).*", line).group() # selects all text after 4 digits in a row excluded            print(year)
         except AttributeError:
             pass
     file.close()
