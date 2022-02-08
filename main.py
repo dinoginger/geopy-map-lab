@@ -6,7 +6,7 @@ Marko Ruzak, APPS_2021, CS-1
 6.02.22
 """
 import haversine
-import pandas
+import pandas as pd
 import folium
 import argparse
 import re
@@ -29,20 +29,29 @@ def argparser():
 
 def file_parse(path: str):
     """
-    Parses file into pandas db
+    Parses file (using regular expressions) into pandas db
     COMPLETE!
     :param path:
     :return:
     """
-    file = open(path, "r", encoding="ISO-8859-1")
+    df = pd.DataFrame(columns=["Name", "Year", "Location"])
+    file = open(path, "r", encoding="ISO-8859-1")  # Change if needed
     lines = file.readlines()
     file.close()
+    counter = 0
     for line in lines:
         try:
             name = re.search("\"(.*?)\"", line).group()  # selects text inside ""
             year = re.search("([0-9]{4})", line).group()  # selects groups of 4 numbers in a row
-            location = re.search("(?<=\(([0-9]{4})\)).*", line).group() # selects all text after 4 digits in a row excluded            print(year)
+            location = re.search("(?<=\(([0-9]{4})\)).*", line).group().strip() # selects all text after 4 digits in a row excluded            print(year)
+            if not df["Name"].str.contains(name).any():
+                counter += 1
+                new_row = {"Name": name, "Year": year, "Location": location}
+                df = df.append(new_row ,ignore_index=True)
             # TODO: <create pd DataFrame and check columns for duplicate names>
+            print(df)
+            if counter == 5:
+                break
         except AttributeError:
             pass
 
@@ -51,8 +60,7 @@ def file_parse(path: str):
 if __name__ == "__main__":
     input_params = argparser().parse_args()
     print(input_params)
-    map = folium.Map(location=[input_params.latitude, input_params.longitude], zoom_start=17)
+    # map = folium.Map(location=[input_params.latitude, input_params.longitude], zoom_start=17)
     file_parse(input_params.path)
     # <code>
-
-    map.save("map.html")
+    # map.save("map.html")
