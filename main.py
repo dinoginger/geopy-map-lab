@@ -9,6 +9,7 @@ import haversine
 import pandas
 import folium
 import argparse
+import re
 
 
 def argparser():
@@ -33,14 +34,22 @@ def file_parse(path: str):
     :param path:
     :return:
     """
-    pass
+    file = open(path, "r", encoding="ISO-8859-1")
+    lines = file.readlines()
+    for line in lines:
+        try:
+            print(re.search("\((\d{4,5})\)",line).group())
+        except AttributeError:
+            pass
+    file.close()
+
 
 
 if __name__ == "__main__":
     input_params = argparser().parse_args()
     print(input_params)
     map = folium.Map(location=[input_params.latitude, input_params.longitude], zoom_start=17)
-
+    file_parse(input_params.path)
     # <code>
 
     map.save("map.html")
