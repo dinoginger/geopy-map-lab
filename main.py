@@ -38,7 +38,10 @@ def file_parse(path: str):
     lines = file.readlines()
     for line in lines:
         try:
-            print(re.search("\((\d{4})\)",line).group())
+            name = re.search("\"(.*?)\"", line).group()
+            year = re.search("\((\d{4})\)",line).group().strip("()")
+            location = re.search("(?<=\((\d{4})\)).*", line).group()
+            print(location)
         except AttributeError:
             pass
     file.close()
