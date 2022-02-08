@@ -6,6 +6,8 @@ Marko Ruzak, APPS_2021, CS-1
 6.02.22
 """
 import haversine
+import pandas
+import folium
 import argparse
 
 
@@ -24,5 +26,21 @@ def argparser():
     return parser
 
 
+def file_parse(path: str):
+    """
+    Parses file into pandas db
+    COMPLETE!
+    :param path:
+    :return:
+    """
+    pass
+
+
 if __name__ == "__main__":
     input_params = argparser().parse_args()
+    print(input_params)
+    map = folium.Map(location=[input_params.latitude, input_params.longitude], zoom_start=17)
+
+    # <code>
+
+    map.save("map.html")
