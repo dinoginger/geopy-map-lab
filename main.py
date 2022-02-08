@@ -36,6 +36,7 @@ def file_parse(path: str):
     """
     file = open(path, "r", encoding="ISO-8859-1")
     lines = file.readlines()
+    file.close()
     for line in lines:
         try:
             name = re.search("\"(.*?)\"", line).group()  # selects text inside ""
@@ -44,7 +45,6 @@ def file_parse(path: str):
             # TODO: <create pd DataFrame and check columns for duplicate names>
         except AttributeError:
             pass
-    file.close()
 
 
 
