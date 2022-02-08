@@ -39,8 +39,9 @@ def file_parse(path: str):
     for line in lines:
         try:
             name = re.search("\"(.*?)\"", line).group()  # selects text inside ""
-            year = re.search("([0-9]{4})",line).group()  # selects groups of 4 numbers in a row
-            location = re.search("(?<=\((\d{4})\)).*", line).group() # selects all text after 4 digits in a row excluded            print(year)
+            year = re.search("([0-9]{4})", line).group()  # selects groups of 4 numbers in a row
+            location = re.search("(?<=\(([0-9]{4})\)).*", line).group() # selects all text after 4 digits in a row excluded            print(year)
+            # TODO: <create pd DataFrame and check columns for duplicate names>
         except AttributeError:
             pass
     file.close()
