@@ -5,7 +5,7 @@ given coordinates and year of movie being published
 Marko Ruzak, APPS_2021, CS-1
 6.02.22
 """
-
+import haversine
 import argparse
 
 
