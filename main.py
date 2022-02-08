@@ -38,7 +38,7 @@ def file_parse(path: str):
     lines = file.readlines()
     for line in lines:
         try:
-            print(re.search("\((\d{4,5})\)",line).group())
+            print(re.search("\((\d{4})\)",line).group())
         except AttributeError:
             pass
     file.close()
