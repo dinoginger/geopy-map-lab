@@ -39,12 +39,12 @@ def file_parse(path: str) -> pd.DataFrame:
     file = open(path, "r", encoding="ISO-8859-1")  # Change if needed
     lines = file.readlines()
     file.close()
-    counter = 0
     for line in lines:
         try:
             name = re.search("\"(.*?)\"", line).group()  # selects text inside ""
             year = re.search("([0-9]{4})", line).group()  # selects groups of 4 numbers in a row
-            location = re.search("(?<=\(([0-9]{4})\)).*", line).group().strip() # selects all text after 4 digits in a row excluded            print(year)
+            location = re.search("(?<=\(([0-9]{4})\)).*",
+                                 line).group().strip()  # selects all text after 4 digits in a row excluded
             location = re.search("(?<=}).*", location).group().strip()
             new_df = pd.DataFrame({
                 "Name": [name],
@@ -52,75 +52,79 @@ def file_parse(path: str) -> pd.DataFrame:
                 "Location": [location]
             })
             df = pd.concat([df, new_df], ignore_index=True)
-            counter += 1
-            if counter == 100:
-                 break
-
         except AttributeError:
             pass
     return df
 
 
 def get_top_coordinates(df: pd.DataFrame, year: int, latitude, longitude):
-    top_coord = {0: 100000}
+    top_distances = {0: 100000}
+    top_coord = {}
     locator = Nominatim(user_agent="webmap_lab")
-    a = df.loc[dataframe["Year"] == str(year)]
-    for index, row in df.iterrows():
+    this_years = df.loc[df["Year"] == str(year)]
+    for index, row in this_years.iterrows():
         try:
             location = row["Location"]
             coordinates = locator.geocode(location)
-            print(coordinates)
             if coordinates is None:
-                print("HERE")
-                if location.find("(") != -1: # if parentheses found, remove
-                    print("IN IF")
-                    location = re.sub("[\(].*?[\)]", "", location) # to remove "()"
+                if location.find("(") != -1:  # if parentheses found, remove
+                    location = re.sub("[\(].*?[\)]", "", location)  # to remove "()"
                     coordinates = locator.geocode(location)
 
             pl_lat = coordinates.latitude
             pl_long = coordinates.longitude
         except AttributeError:
-            # print("found a mistake ", location)
             parts = location.split(",")  # remove first part of location
             parts.pop(0)
             location = ", ".join(parts)
             coordinates = locator.geocode(location)
-            # print("finised, ", coordinates.latitude, coordinates.longitude)
-
 
         distance = haversine((latitude, longitude),
                              (pl_lat, pl_long), unit="km")
-        if len(top_coord.values()) < 10:
-            top_coord[index] = distance
+        if len(top_distances.values()) < 10:
+            top_distances[index] = distance
+            top_coord[index] = (pl_lat, pl_long)
             continue
 
-        if distance < max(top_coord.values()):
-            if len(top_coord.values()) == 10:
-                key_to_delete = max(top_coord, key=lambda k: top_coord[k])
+        if distance < max(top_distances.values()):
+            if len(top_distances.values()) == 10:
+                key_to_delete = max(top_distances, key=lambda k: top_distances[k])
+                del top_distances[key_to_delete]
                 del top_coord[key_to_delete]
-                top_coord[index] = distance
+                top_distances[index] = distance
+                top_coord[index] = (pl_lat, pl_long)
             else:
-                top_coord[index] = distance
+                top_distances[index] = distance
+                top_coord[index] = (pl_lat, pl_long)
     return top_coord
 
 
-    #results = a.apply(locator.geocode(a.Location))
-    #print(results)
+def create_map(mapp: folium.Map, top_10: dict, df: pd.DataFrame, year: int):
+    locations = folium.FeatureGroup(name=f"All {year}'s Movie Locations")
+    for movie in top_10:
+        name = df.loc[movie]["Name"]
+        location = top_10[movie]
+        popup = df.loc[movie]["Name"]
+        locations.add_child(folium.Marker(name=name, location=location, popup=popup))
+    mapp.add_child(locations)
+    return mapp
+
+
+def main():
+    input_params = argparser().parse_args()
+    mapp = folium.Map(location=[input_params.latitude, input_params.longitude], zoom_start=3)
+    folium.CircleMarker(location=(input_params.latitude, input_params.longitude),
+                        radius=5, popup='I am here!',
+                        color='red', fill=True, fill_color='red').add_to(mapp)
+    dataframe = file_parse(input_params.path)
+    try:
+        top_coordinates = get_top_coordinates(dataframe, input_params.year,
+                                              input_params.latitude, input_params.longitude)
+    except AttributeError:
+        pass
+    mapp = create_map(mapp, top_coordinates, dataframe, input_params.year)
+    mapp.save("map.html")
 
 
 if __name__ == "__main__":
-    input_params = argparser().parse_args()
-    print(input_params)
-    map = folium.Map(location=[input_params.latitude, input_params.longitude], zoom_start=17)
-    dataframe = file_parse(input_params.path)
-    print(input_params.year)
-    a = dataframe.loc[dataframe["Year"] == str(input_params.year)]
-    print(a)
-    try:
-        top_coordinates = get_top_coordinates(dataframe, input_params.year,
-                   input_params.latitude, input_params.longitude)
-        print(top_coordinates)
-
-    except AttributeError:
-        pass
-    map.save("map.html")
+    main()
