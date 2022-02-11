@@ -5,10 +5,11 @@ given coordinates and year of movie being published
 Marko Ruzak, APPS_2021, CS-1
 6.02.22
 """
-import haversine
+from haversine import haversine
 import pandas as pd
 import folium
 import argparse
+from geopy.geocoders import Nominatim
 import re
 
 
@@ -60,13 +61,54 @@ def file_parse(path: str) -> pd.DataFrame:
     return df
 
 
+def get_top_coordinates(df: pd.DataFrame, year: int, latitude, longitude):
+    locator = Nominatim(user_agent="webmap_lab")
+    a = df.loc[dataframe["Year"] == str(year)]
+    for _, row in df.iterrows():
+        try:
+            location = row["Location"]
+            coordinates = locator.geocode(location)
+            print(coordinates)
+            if coordinates is None:
+                print("HERE")
+                if location.find("(") != -1: # if parentheses found, remove
+                    print("IN IF")
+                    location = re.sub("[\(].*?[\)]", "", location) # to remove "()"
+                    coordinates = locator.geocode(location)
+
+            pl_lat = coordinates.latitude
+            pl_long = coordinates.longitude
+        except AttributeError:
+            # print("found a mistake ", location)
+            parts = location.split(",")  # remove first part of location
+            parts.pop(0)
+            location = ", ".join(parts)
+            coordinates = locator.geocode(location)
+            # print("finised, ", coordinates.latitude, coordinates.longitude)
+
+
+        distance = haversine((latitude, longitude),
+                             (pl_lat, pl_long), unit="km")
+
+
+        print(distance)
+
+
+    #results = a.apply(locator.geocode(a.Location))
+    #print(results)
+
+
 if __name__ == "__main__":
     input_params = argparser().parse_args()
     print(input_params)
-    # map = folium.Map(location=[input_params.latitude, input_params.longitude], zoom_start=17)
+    map = folium.Map(location=[input_params.latitude, input_params.longitude], zoom_start=17)
     dataframe = file_parse(input_params.path)
     print(input_params.year)
     a = dataframe.loc[dataframe["Year"] == str(input_params.year)]
     print(a)
-    # <code>
-    # map.save("map.html")
+    try:
+        get_top_coordinates(dataframe, input_params.year,
+                   input_params.latitude, input_params.longitude)
+    except AttributeError:
+        pass
+    map.save("map.html")
