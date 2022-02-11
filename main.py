@@ -11,9 +11,15 @@ import folium
 import argparse
 from geopy.geocoders import Nominatim
 import re
-
+HTML_FILE_NAME = "map.html"
 
 def argparser():
+    """
+    Argument parser function for the program.
+
+    Type "python3 main.py -help" for the description of the parameters.
+    :return: parser object with unpacked recieved parameters.
+    """
     parser = argparse.ArgumentParser(description='Process input parameters for generating'
                                                  ' geo map script.')
     parser.add_argument('latitude', metavar='Latitude', type=float,
@@ -30,10 +36,16 @@ def argparser():
 
 def file_parse(path: str) -> pd.DataFrame:
     """
-    Parses file (using regular expressions) into pandas db
-    COMPLETE!
-    :param path:
-    :return:
+    Parses file (using regular expressions) into pandas DataFrame object.
+
+    :param path: path to file to be parsed.
+    :return: Pandas DataFrame object with all the movies in a row with three columns:
+    Name, Year, Location.
+
+    Example:
+                                     Name  Year                                           Location
+19                        "#LoveMyRoomie"  2016                            Brooklyn, New York, USA
+20                        "#SpongeyLeaks"  2016            Northridge, California, USA\t(location)
     """
     df = pd.DataFrame(columns=["Name", "Year", "Location"])
     file = open(path, "r", encoding="ISO-8859-1")  # Change if needed
@@ -58,8 +70,20 @@ def file_parse(path: str) -> pd.DataFrame:
 
 
 def get_top_coordinates(df: pd.DataFrame, year: int, latitude, longitude):
-    top_distances = {0: 100000}
-    top_coord = {}
+    """
+    Function which is used to determine latitude/longitude coord of movie shooting
+    location of a specific year,
+    and also to get 10 closest locations to given on input one.
+
+    :param df: DataFrame object with all parsed from file data
+    :param year: inputted by user year parameter
+    :param latitude: inputted by user latitude parameter
+    :param longitude: inputted by user longtitude parameter
+    :return: dict of tuples: - key is index of movie in DataFrame, elements of tuple
+    are latitude and longtitude
+    """
+    top_distances = {0: 100000} # just for it to have at least 1 element
+    top_coord = {0: 100000}
     locator = Nominatim(user_agent="webmap_lab")
     this_years = df.loc[df["Year"] == str(year)]
     for index, row in this_years.iterrows():
@@ -100,6 +124,17 @@ def get_top_coordinates(df: pd.DataFrame, year: int, latitude, longitude):
 
 
 def create_map(mapp: folium.Map, top_10: dict, df: pd.DataFrame, year: int):
+    """
+    Function for the map creation in the end.
+    Puts top 10 locations, which are given as an input as
+    markers.
+
+    :param mapp: folium.Map object, our map
+    :param top_10: list of tuples, our coordinates with Dataframe object ID as a key.
+    :param df: DataFrame object with all film values
+    :param year: inputted by user parameter.
+    :return: Map, as the end of operation
+    """
     locations = folium.FeatureGroup(name=f"All {year}'s Movie Locations")
     for movie in top_10:
         name = df.loc[movie]["Name"]
@@ -111,6 +146,11 @@ def create_map(mapp: folium.Map, top_10: dict, df: pd.DataFrame, year: int):
 
 
 def main():
+    """
+    Main function of our program.
+
+    :return:
+    """
     input_params = argparser().parse_args()
     mapp = folium.Map(location=[input_params.latitude, input_params.longitude], zoom_start=3)
     folium.CircleMarker(location=(input_params.latitude, input_params.longitude),
@@ -123,7 +163,8 @@ def main():
     except AttributeError:
         pass
     mapp = create_map(mapp, top_coordinates, dataframe, input_params.year)
-    mapp.save("map.html")
+    mapp.save(HTML_FILE_NAME)
+    print(f"Job's done!. Generated map is stored to {HTML_FILE_NAME}")
 
 
 if __name__ == "__main__":
