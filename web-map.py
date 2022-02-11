@@ -17,7 +17,7 @@ def argparser():
     """
     Argument parser function for the program.
 
-    Type "python3 main.py -help" for the description of the parameters.
+    Type "python3 web-map.py -help" for the description of the parameters.
     :return: parser object with unpacked recieved parameters.
     """
     parser = argparse.ArgumentParser(description='Process input parameters for generating'
@@ -66,6 +66,7 @@ def file_parse(path: str) -> pd.DataFrame:
             df = pd.concat([df, new_df], ignore_index=True)
         except AttributeError:
             pass
+    print("Parsed the file.")
     return df
 
 
@@ -83,7 +84,7 @@ def get_top_coordinates(df: pd.DataFrame, year: int, latitude, longitude):
     are latitude and longtitude
     """
     top_distances = {0: 100000} # just for it to have at least 1 element
-    top_coord = {0: 100000}
+    top_coord = {0: (100000,9)}
     locator = Nominatim(user_agent="webmap_lab")
     this_years = df.loc[df["Year"] == str(year)]
     for index, row in this_years.iterrows():
@@ -120,6 +121,8 @@ def get_top_coordinates(df: pd.DataFrame, year: int, latitude, longitude):
             else:
                 top_distances[index] = distance
                 top_coord[index] = (pl_lat, pl_long)
+    print("Got closest to given movie shooting locations.")
+    print(top_coord)
     return top_coord
 
 
@@ -136,12 +139,15 @@ def create_map(mapp: folium.Map, top_10: dict, df: pd.DataFrame, year: int):
     :return: Map, as the end of operation
     """
     locations = folium.FeatureGroup(name=f"All {year}'s Movie Locations")
+    counter = 0
     for movie in top_10:
+        counter += 1
         name = df.loc[movie]["Name"]
         location = top_10[movie]
         popup = df.loc[movie]["Name"]
         locations.add_child(folium.Marker(name=name, location=location, popup=popup))
     mapp.add_child(locations)
+    print("Created map.")
     return mapp
 
 
