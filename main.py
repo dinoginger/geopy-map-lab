@@ -52,9 +52,9 @@ def file_parse(path: str) -> pd.DataFrame:
                 "Location": [location]
             })
             df = pd.concat([df, new_df], ignore_index=True)
-            # counter += 1
-            # if counter == 5:
-            #     break
+            counter += 1
+            if counter == 100:
+                 break
 
         except AttributeError:
             pass
@@ -62,9 +62,10 @@ def file_parse(path: str) -> pd.DataFrame:
 
 
 def get_top_coordinates(df: pd.DataFrame, year: int, latitude, longitude):
+    top_coord = {0: 100000}
     locator = Nominatim(user_agent="webmap_lab")
     a = df.loc[dataframe["Year"] == str(year)]
-    for _, row in df.iterrows():
+    for index, row in df.iterrows():
         try:
             location = row["Location"]
             coordinates = locator.geocode(location)
@@ -89,9 +90,18 @@ def get_top_coordinates(df: pd.DataFrame, year: int, latitude, longitude):
 
         distance = haversine((latitude, longitude),
                              (pl_lat, pl_long), unit="km")
+        if len(top_coord.values()) < 10:
+            top_coord[index] = distance
+            continue
 
-
-        print(distance)
+        if distance < max(top_coord.values()):
+            if len(top_coord.values()) == 10:
+                key_to_delete = max(top_coord, key=lambda k: top_coord[k])
+                del top_coord[key_to_delete]
+                top_coord[index] = distance
+            else:
+                top_coord[index] = distance
+    return top_coord
 
 
     #results = a.apply(locator.geocode(a.Location))
@@ -107,8 +117,10 @@ if __name__ == "__main__":
     a = dataframe.loc[dataframe["Year"] == str(input_params.year)]
     print(a)
     try:
-        get_top_coordinates(dataframe, input_params.year,
+        top_coordinates = get_top_coordinates(dataframe, input_params.year,
                    input_params.latitude, input_params.longitude)
+        print(top_coordinates)
+
     except AttributeError:
         pass
     map.save("map.html")
