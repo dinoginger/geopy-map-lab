@@ -17,7 +17,7 @@ def argparser():
     """
     Argument parser function for the program.
 
-    Type "python3 web-map.py -help" for the description of the parameters.
+    Type "python3 main.py -help" for the description of the parameters.
     :return: parser object with unpacked recieved parameters.
     """
     parser = argparse.ArgumentParser(description='Process input parameters for generating'
